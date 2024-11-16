@@ -17,12 +17,14 @@ router = APIRouter(
     prefix="/qdrant"
 )
 
+FASTAPI_KEY = os.getenv('FASTAPI_KEY', '123456')
+
 
 def isValidAuthorization(headers, response):
     response.headers["access-control-allow-headers"] = "Origin, Authorization"
     response.headers["access-control-allow-methods"] = "GET,HEAD,OPTIONS,POST"
     response.headers["access-control-allow-origin"] = "*"
-    if not headers.Authorization.strip().endswith('123456'):
+    if not headers.Authorization.strip().endswith(FASTAPI_KEY):
         raise HTTPException(status_code=401, detail={
             "Authorization": headers.Authorization,
             'detail': "Authorization 校验失败"
