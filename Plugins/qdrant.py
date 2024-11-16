@@ -6,7 +6,7 @@ import httpx, json
 
 
 class CommonHeaders(BaseModel):
-    Authorization: str
+    Limour: str
 
 
 class CommonBody(BaseModel):
@@ -21,12 +21,12 @@ FASTAPI_KEY = os.getenv('FASTAPI_KEY', '123456')
 
 
 def isValidAuthorization(headers, response):
-    response.headers["access-control-allow-headers"] = "Origin, Authorization"
+    response.headers["access-control-allow-headers"] = "Origin, Authorization, Limour"
     response.headers["access-control-allow-methods"] = "GET,HEAD,OPTIONS,POST"
     response.headers["access-control-allow-origin"] = "*"
-    if not headers.Authorization.strip().endswith(FASTAPI_KEY):
+    if not headers.Limour.strip().endswith(FASTAPI_KEY):
         raise HTTPException(status_code=401, detail={
-            "Authorization": headers.Authorization,
+            "Authorization": headers.Limour,
             'detail': "Authorization 校验失败"
         })
 
@@ -36,7 +36,7 @@ def read_root(headers: Annotated[CommonHeaders, Header()], body: CommonBody, res
     isValidAuthorization(headers, response)
     res = {
         "QDRANT_RERANK_URL": QDRANT_RERANK_URL,
-        "Authorization": headers.Authorization,
+        "Authorization": headers.Limour,
         "input": body.input
     }
     return res
