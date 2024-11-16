@@ -1,0 +1,14 @@
+services:
+  fastapi:
+    image: limour/fastapi
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app
+      - /etc/localtime:/etc/localtime:ro
+
+networks:
+  default:
+    external: true
+    name: ngpm
