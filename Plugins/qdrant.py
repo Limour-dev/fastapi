@@ -43,11 +43,11 @@ def read_root(headers: Annotated[CommonHeaders, Header()], body: CommonBody, res
 
 
 @router.post("/v1")
-def app_qdrant(headers: Annotated[CommonHeaders, Header()], body: CommonBody, response: Response):
+async def app_qdrant(headers: Annotated[CommonHeaders, Header()], body: CommonBody, response: Response):
     isValidAuthorization(headers, response)
-    vector = embd([body.input])[0][1]
-    res = qdrant(vector[:256])
-    return (x[0] for x in rerank(res, body.input))
+    vector = await embd([body.input])
+    res = await qdrant(vector[0][1][:256])
+    return (x[0] for x in await rerank(res, body.input))
 
 
 def callback(app: APIRouter):
@@ -67,9 +67,10 @@ QDRANT_URL = os.getenv('QDRANT_URL', 'http://localhost:6333') + '/collections/%s
 QDRANT_KEY = os.getenv('QDRANT_KEY', '')
 
 
-def post_json(url: str, data: dict, headers: dict, decoding='utf-8'):
+async def post_json(url: str, data: dict, headers: dict, decoding='utf-8'):
     headers.update({'Content-Type': 'application/json'})
-    response = httpx.post(url, headers=headers, json=data)
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=data)
     res_text = response.content.decode(encoding=decoding, errors='ignore')
     try:
         res = json.loads(res_text)
@@ -97,14 +98,14 @@ def getData(r_: dict, key_: str):
     return data
 
 
-def embd(input_: list):
-    response: dict = post_json(url=QDRANT_EMBD_URL,
-                               data={
-                                   'model': QDRANT_EMBD_MODEL,
-                                   "encoding_format": "float",
-                                   'input': input_
-                               },
-                               headers={'Authorization': QDRANT_EMBD_KEY})
+async def embd(input_: list):
+    response: dict = await post_json(url=QDRANT_EMBD_URL,
+                                     data={
+                                         'model': QDRANT_EMBD_MODEL,
+                                         "encoding_format": "float",
+                                         'input': input_
+                                     },
+                                     headers={'Authorization': QDRANT_EMBD_KEY})
     data: list = getData(response, 'data')
     if len(data) != len(input_):
         raise HTTPException(status_code=404, detail={
@@ -115,15 +116,15 @@ def embd(input_: list):
     return [(input_[i], data[i]['embedding']) for i in range(len(data))]
 
 
-def rerank(documents_: list, query_: str, top_n_: int = 3):
-    response: dict = post_json(url=QDRANT_RERANK_URL,
-                               data={
-                                   'model': QDRANT_RERANK_MODEL,
-                                   "top_n": top_n_,
-                                   'documents': documents_,
-                                   "query": query_
-                               },
-                               headers={'Authorization': QDRANT_RERANK_KEY})
+async def rerank(documents_: list, query_: str, top_n_: int = 3):
+    response: dict = await post_json(url=QDRANT_RERANK_URL,
+                                     data={
+                                         'model': QDRANT_RERANK_MODEL,
+                                         "top_n": top_n_,
+                                         'documents': documents_,
+                                         "query": query_
+                                     },
+                                     headers={'Authorization': QDRANT_RERANK_KEY})
     data: list = getData(response, 'results')
     res = []
     for chunk in data:
@@ -132,13 +133,13 @@ def rerank(documents_: list, query_: str, top_n_: int = 3):
     return res
 
 
-def qdrant(vector_: list, collection_name_: str = 'my_collection', limit_: int = 5):
-    response: dict = post_json(url=QDRANT_URL % collection_name_,
-                               data={
-                                   'vector': vector_,
-                                   "limit": limit_,
-                                   'with_payload': True
-                               },
-                               headers={'api-key': QDRANT_KEY})
+async def qdrant(vector_: list, collection_name_: str = 'my_collection', limit_: int = 5):
+    response: dict = await post_json(url=QDRANT_URL % collection_name_,
+                                     data={
+                                         'vector': vector_,
+                                         "limit": limit_,
+                                         'with_payload': True
+                                     },
+                                     headers={'api-key': QDRANT_KEY})
     data: list = getData(response, 'result')
     return [res['payload']['text'] for res in data]
