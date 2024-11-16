@@ -10,17 +10,17 @@ def post_json(url: str, data: dict, headers: dict, decoding='utf-8'):
 
 
 test1 = post_json(
-    'http://127.0.0.1:8000/qdrant/hello',
+    'https://fastapi.limour.top/qdrant/hello',
     {
         'input': 'test'
     },
-    {'Authorization': '123456'}
+    {'Limour': '123456'}
 )
 
 test2 = post_json(
-    'http://127.0.0.1:8000/qdrant/v1',
+    'https://fastapi.limour.top/qdrant/v1',
     {
         'input': '机器人限拥令是什么'
     },
-    {'Authorization': '123456'}
+    {'Limour': '123456'}
 )
