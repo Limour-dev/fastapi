@@ -39,7 +39,7 @@ def read_root(headers: Annotated[CommonHeaders, Header()], body: CommonBody, res
     cb_c = body.input
     res = {
         "Authorization": headers.Limour,
-        "input": cb_c
+        "hash": hash(cb_c)
     }
     return res
 
