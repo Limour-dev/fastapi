@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Response, Request
 import httpx, re
+from urllib.parse import unquote
 
 router = APIRouter(
     prefix="/subconverter"
@@ -29,6 +30,7 @@ reg_e = re.compile(r'^[^ \n\r]', re.MULTILINE)
 @router.get("/clash/{url_path:path}")
 async def clash(request: Request, url_path: str):
     original_query = request.url.query
+    url_path = unquote(url_path)
     if original_query:
         url = f"https://{url_path}?{original_query}"
     else:
